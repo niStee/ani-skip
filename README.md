@@ -94,7 +94,7 @@ ani-skip -h
 ## Install
 
 - Linux
-  > For Arch linux, ani-skip is available int the AUR as [ani-skip-git](https://aur.archlinux.org/packages/ani-skip-git).
+  > For Arch linux, ani-skip is available in the AUR as [ani-skip-git](https://aur.archlinux.org/packages/ani-skip-git).
   ```sh
   git clone https://github.com/synacktraa/ani-skip.git
   sudo apt install mpv fzf  
