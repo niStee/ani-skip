@@ -1,9 +1,9 @@
 #!/bin/sh
 
-
-version_number="1.0.1"
+version_number="1.1.0"
 
 agent="Mozilla/5.0 (Windows NT 6.1; Win64; rv:109.0) Gecko/20100101 Firefox/109.0"
+allanime_api="https://api.allanime.day/api"
 
 chapter_format="\n[CHAPTER]\nTIMEBASE=1/1000\nSTART=%s\nEND=%s\nTITLE=%s\n"
 option_format="skip-%s_start=%s,skip-%s_end=%s" 
@@ -20,9 +20,13 @@ help_info() {
 
     Options:
       -q, --query
-        Anime Title or MyAnimeList ID
+        Search query or MyAnimeList ID
       -e, --episode
         Specify the episode number
+      -s, --title-source
+        Source to search for MAL ID (myanimelist, allanime). Default: myanimelist
+      -f, --title-filter
+        Regex to filter search results for disambiguation
       -V, --version
         Show the version of the script
       -h, --help
@@ -33,7 +37,9 @@ help_info() {
       %s -q \"Solo Leveling\" # Returns MyAnimeList ID
       %s -q \"Solo Leveling\" -e 3 # Returns MPV skip flag
       %s -q 52299 -e 5 # Returns MPV skip flag
-    \n" "${0##*/}" "${0##*/}" "${0##*/}" "${0##*/}" 
+      %s -q \"one piece\" -s allanime -f \"^1P$\" -e 12 # AllAnime source with exact match
+      %s -q \"Solo Leveling\" -s allanime -f \"Season 2\" -e 1 # Season disambiguation
+    \n" "${0##*/}" "${0##*/}" "${0##*/}" "${0##*/}" "${0##*/}" "${0##*/}"
     exit 0
 }
 
@@ -52,11 +58,11 @@ update_script() {
     exit 0
 }
 
-fetch_mal_id() {
+fetch_mal_id_myanimelist() {
     #shellcheck disable=SC2016
     : '
-    `fetch_mal_id` fetches MyAnimeList Identifier of particular anime
-    :param $1: title of the anime
+    `fetch_mal_id_myanimelist` fetches MyAnimeList Identifier using MAL search
+    :param $1: search query
     '
     name=$(printf "%s" "$*" | sed 's| (\([0-9]*\) episodes)||')
     keyword=$(printf "%s" "$name" | tr -c '[:alnum:]' ' ' | sed -E 's| |%20|g')
@@ -64,10 +70,60 @@ fetch_mal_id() {
     name=$(printf "%s\n" "$name" | tr -cs '[:print:]' ' ' | tr -c '[:alnum:]' ' ')
     fzf_nth=$(printf "%s," $(seq 1 "$(printf "%s" "$name" | wc -w)") | sed 's|,$||')
     results=$(printf "%s" "$mal_metadata" | sed 's|},{|\n|g' | sed 's|.*,"name":"||g ; s|","url":".*||g')
-    relevant_name=$(printf "%s" "$results" | fzf -i --filter="$name" --nth="$fzf_nth" | head -n1)
-    [ -z "$relevant_name" ] && relevant_name=$(printf "%s" "$results" | fzf -i --filter="$name" | head -n1)
-    [ -z "$relevant_name" ] && relevant_name=$(printf "%s" "$results" | head -n1)
+    relevant_name=""
+    if [ -n "$title_filter" ]; then
+        relevant_name=$(printf "%s" "$results" | grep -E "$title_filter" | head -n1)
+    fi
+    if [ -z "$relevant_name" ]; then
+        relevant_name=$(printf "%s" "$results" | fzf -i --filter="$name" --nth="$fzf_nth" | head -n1)
+        [ -z "$relevant_name" ] && relevant_name=$(printf "%s" "$results" | fzf -i --filter="$name" | head -n1)
+        [ -z "$relevant_name" ] && relevant_name=$(printf "%s" "$results" | head -n1)
+    fi
     printf "%s" "$mal_metadata" | sed 's|},{|\n|g' | grep 'name":"'"$relevant_name"'","url":' | sed -nE 's|.*"id":([0-9]{1,9}),.*|\1|p'
+}
+
+fetch_mal_id_allanime() {
+    #shellcheck disable=SC2016
+    : '
+    `fetch_mal_id_allanime` fetches MyAnimeList Identifier using AllAnime
+    :param $1: search query
+    '
+    search_query='query($search:SearchInput $limit:Int $page:Int $translationType:VaildTranslationTypeEnumType $countryOrigin:VaildCountryOriginEnumType){shows(search:$search limit:$limit page:$page translationType:$translationType countryOrigin:$countryOrigin){edges{_id name}}}'
+    keyword=$(printf "%s" "$*" | sed 's| (\([0-9]*\) episodes)||')
+    variables="{\"search\":{\"query\":\"$keyword\"},\"limit\":10,\"page\":1,\"translationType\":\"sub\",\"countryOrigin\":\"ALL\"}"
+
+    search_result=$(curl -s "$allanime_api" \
+        -H "User-Agent: $agent" \
+        -H "Content-Type: application/json" \
+        --data-raw "{\"query\":\"$search_query\",\"variables\":$variables}")
+
+    # Extract _id and name pairs (one per line: _id\tname)
+    pairs=$(printf "%s" "$search_result" | sed 's|},{|\n|g' | sed -nE 's|.*"_id":"([^"]+)","name":"([^"]+)".*|\1\t\2|p')
+
+    [ -z "$pairs" ] && die "No results found on AllAnime!"
+
+    names=$(printf "%s" "$pairs" | cut -f2)
+    if [ -n "$title_filter" ]; then
+        relevant_name=$(printf "%s" "$names" | grep -E "$title_filter" | head -n1)
+    fi
+    if [ -z "$relevant_name" ]; then
+        name=$(printf "%s" "$keyword" | tr -cs '[:print:]' ' ' | tr -c '[:alnum:]' ' ')
+        relevant_name=$(printf "%s" "$names" | fzf -i --filter="$name" | head -n1)
+        [ -z "$relevant_name" ] && relevant_name=$(printf "%s" "$names" | head -n1)
+    fi
+    matched=$(printf "%s" "$pairs" | awk -F'\t' -v name="$relevant_name" '$2 == name' | head -n1)
+    # Fall back to substring match if exact match fails
+    [ -z "$matched" ] && matched=$(printf "%s" "$pairs" | grep "$relevant_name" | head -n1)
+
+    allanime_id=$(printf "%s" "$matched" | cut -f1)
+    [ -z "$allanime_id" ] && die "Could not match anime on AllAnime!"
+
+    # Fetch malId using AllAnime show _id
+    curl -s "$allanime_api" \
+        -H "User-Agent: $agent" \
+        -H "Content-Type: application/json" \
+        --data-raw "{\"query\":\"{ show(_id: \\\"$allanime_id\\\") { malId } }\"}" \
+        | sed -n 's/.*"malId":"\([0-9]*\)".*/\1/p'
 }
 
 ftoi() {
@@ -130,6 +186,8 @@ build_flags() {
     [ -n "$options" ] && printf -- "--chapters-file=%s --script-opts=%s" "$chapters_file" "$options"
 }
 
+title_source="myanimelist"
+title_filter=""
 
 [ $# -eq 0 ] && help_info
 while [ $# -gt 0 ]; do
@@ -139,11 +197,8 @@ while [ $# -gt 0 ]; do
         -V | --version) printf "%s\n" "$version_number" && exit 0 ;;
         -h | --help) help_info ;;
         -q | --query)
-            [ $# -lt 2 ] && die "missing anime title/MyAnimeList ID!"
-            case $2 in
-                ''|*[!0-9]*) mal_id=$(fetch_mal_id $2) ;;
-                *) mal_id=$2 ;;
-            esac
+            [ $# -lt 2 ] && die "missing search query/MyAnimeList ID!"
+            query=$2
             shift
             ;;
         -e | --episode)
@@ -152,11 +207,33 @@ while [ $# -gt 0 ]; do
                 ''|*[!0-9]*) die "value must be a number!" ;;
                 *) episode=$2 ;;
             esac
+            shift
+            ;;
+        -s | --title-source)
+            [ $# -lt 2 ] && die "missing title source!"
+            case $2 in
+                myanimelist|allanime) title_source=$2 ;;
+                *) die "invalid title source '$2'! Use: myanimelist, allanime" ;;
+            esac
+            shift
+            ;;
+        -f | --title-filter)
+            [ $# -lt 2 ] && die "missing title filter!"
+            title_filter=$2
+            shift
+            ;;
     esac
     shift
 done
 
-[ -z "$mal_id" ] && die "-q/--query is required!"
+# Resolve query to MAL ID
+case "$query" in
+    '') die "-q/--query is required!" ;;
+    *[!0-9]*) mal_id=$(fetch_mal_id_"$title_source" $query) ;;
+    *) mal_id=$query ;;
+esac
+
+[ -z "$mal_id" ] && die "Could not find MAL ID!"
 if [ -z "$episode" ]; then
     printf "%s" "$mal_id"
 else
