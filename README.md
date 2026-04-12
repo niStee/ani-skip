@@ -48,47 +48,73 @@ ani-skip -h
 
     Options:
       -q, --query
-        Anime Title or MyAnimeList ID
+        Search query for anime title
+      -i, --id
+        Direct source ID (MyAnimeList or AllAnime ID)
       -e, --episode
         Specify the episode number
+      -s, --source
+        Source for ID/query resolution (myanimelist, allanime). Default: myanimelist
+      -f, --filter
+        Regex to filter search results for disambiguation (used with -q)
       -V, --version
         Show the version of the script
       -h, --help
         Show this help message and exit
       -U, --update
         Update the script
+
+    Either -q or -i is required.
+
     Some example usages:
-      ani-skip -q "Solo Leveling" # Returns MyAnimeList ID
-      ani-skip -q "Solo Leveling" -e 3 # Returns MPV skip flag
-      ani-skip -q 52299 -e 5 # Returns MPV skip flag
+      ani-skip -i 52299 -e 5 # MAL ID directly
+      ani-skip -i "ReooPAxPMsHM4KPMY" -s allanime -e 12 # AllAnime ID directly
+      ani-skip -q "Solo Leveling" -e 3 # Search MAL (default)
+      ani-skip -q "one piece" -s allanime -f "^1P$" -e 12 # Search AllAnime with filter
+      ani-skip -q "Solo Leveling" -s allanime -f "Season 2" -e 1 # Season disambiguation
 ```
 
-- Build MPV skip options directly using anime's title
-  ```sh
-  ani-skip --query "Black Clover (170 episodes)" --episode 10
-  ```
-  ```
-  --chapters-file=/tmp/tempfile --script-opts=skip-op_start=140.153,skip-op_end=230.153,skip-ed_start=1301.824,skip-ed_end=1431
-  ```
-  > `script-opts` with the `script` flag is produced by ani-skip when metadata for a specific anime's skip times exists in the database. It's important to append these flags at the end due to certain mpv nuances.
+### Search MAL (default, backwards compatible)
 
-- Fetch `MyAnimeList` ID
-  ```sh
-  ani-skip -q "Solo Leveling"
-  ```
-  ```
-  52299
-  ```
-  > Persisting it will help building flags quickly when requesting the same anime for skip times.
+```sh
+ani-skip -q "Solo Leveling" -e 3
+```
+```
+--chapters-file=/tmp/tempfile --script-opts=skip-op_start=130.531,skip-op_end=220.531,skip-ed_start=1326.58,skip-ed_end=1416.58
+```
 
-- Build MPV skip options directly using `MyAnimeList` ID
-  ```sh
-  ani-skip -q 52299 -e 2
-  ```
-  ```
-  --chapters-file=/tmp/tempfile --script-opts=skip-op_start=130.531,skip-op_end=220.531,skip-ed_start=1326.58,skip-ed_end=1416.58
-  ```
-  > Use the stored or persisted MAL ID to expedite the process of fetching skip times.
+### Search AllAnime
+
+AllAnime stores `malId` for each show, so querying it directly avoids the title mismatch issues that occur when anime have non-standard display names (e.g. "1P" for One Piece).
+
+```sh
+ani-skip -q "one piece" -s allanime -f "^1P$" -e 12
+```
+
+Use `-f` with a regex to disambiguate results (exact match, season selection, etc).
+
+### Direct ID input
+
+Pass a MAL or AllAnime ID directly to skip the search step entirely. This is the ideal path for [ani-cli](https://github.com/pystardust/ani-cli) integration since it already has the AllAnime `_id`.
+
+```sh
+# AllAnime ID
+ani-skip -i "ReooPAxPMsHM4KPMY" -s allanime -e 12
+
+# MAL ID
+ani-skip -i 52299 -e 5
+```
+
+### Fetch MAL ID only (no episode)
+
+Omit `-e` to just resolve and print the MAL ID.
+
+```sh
+ani-skip -q "Solo Leveling"
+```
+```
+52299
+```
 
 
 ## Install
@@ -126,7 +152,8 @@ ani-skip -h
 ## Checklist
 
 - [x] MPV support
-- [x] MyAnimeList Id scraper
+- [x] MyAnimeList ID resolution
+- [x] AllAnime ID resolution
 - [ ] VLC support
 - [ ] Create packages for Windows, Linux and Termux
 - [ ] Test it on Android termux and Mac
