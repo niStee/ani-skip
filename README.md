@@ -72,7 +72,7 @@ ani-skip -h
       -h, --help
         Show this help message and exit
       -U, --update
-        Update the script
+        Update to the latest version
 
     Either -q or -i is required.
 
