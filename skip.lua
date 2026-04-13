@@ -4,7 +4,7 @@ local mpv_options = require("mp.options")
 
 local options = { -- setting default options
     op_start = 0, op_end = 0, ed_start = 0, ed_end = 0,
-    always = false, toggle = false, toggle_key = "a", offset = 0,
+    toggle = false, toggle_key = "a", offset = 0,
 }
 mpv_options.read_options(options, "skip") --reading script-opts data
 
@@ -24,18 +24,21 @@ local function skip()
         return
     end
 
+    local op_target = options.op_end - options.offset
+    local ed_target = options.ed_end - options.offset
+
     -- Check for opening sequence
-    if current_time >= options.op_start and current_time < options.op_end then
-        if options.always or not skipped_op then
-            mp.set_property_number("time-pos", options.op_end - options.offset)
+    if current_time >= options.op_start and current_time < op_target then
+        if options.toggle or not skipped_op then
+            mp.set_property_number("time-pos", op_target)
             skipped_op = true
         end
     end
 
     -- Check for ending sequence
-    if current_time >= options.ed_start and current_time < options.ed_end then
-        if options.always or not skipped_ed then
-            mp.set_property_number("time-pos", options.ed_end - options.offset)
+    if current_time >= options.ed_start and current_time < ed_target then
+        if options.toggle or not skipped_ed then
+            mp.set_property_number("time-pos", ed_target)
             skipped_ed = true
         end
     end
@@ -44,6 +47,10 @@ end
 -- Toggle skip on/off
 local function toggle_skip()
     skip_enabled = not skip_enabled
+    if skip_enabled then
+        skipped_op = false
+        skipped_ed = false
+    end
     mp.osd_message("Skip: " .. (skip_enabled and "ON" or "OFF"), 2)
 end
 

@@ -30,12 +30,10 @@ help_info() {
         [default: myanimelist]
       -f, --filter
         Regex to filter search results for disambiguation (used with -q)
-      --always
-        Always skip 
-        [default: skip once per session]
       --toggle
-        Enable keybind in mpv to toggle skipping on/off
-        [default: 'a', set ANI_SKIP_TOGGLE_KEY to customize]
+        Enable keybind in mpv to toggle skipping on/off.
+        When enabled, skips always while active (default: skip once).
+        [default key: 'a', set ANI_SKIP_TOGGLE_KEY to customize]
       -o, --offset <seconds>
         End skip N seconds early to avoid missing episode content
         [max: 5, default: 0]
@@ -223,7 +221,6 @@ build_flags() {
 
     printf "%s" ";FFMETADATA1" > "$chapters_file"
     options=$(build_options "$metadata")
-    [ "$always" = 1 ] && options="$options,skip-always=yes"
     [ "$toggle" = 1 ] && options="$options,skip-toggle=yes,skip-toggle_key=$toggle_key"
     [ "$offset" -gt 0 ] && options="$options,skip-offset=$offset"
     [ -n "$options" ] && printf -- "--chapters-file=%s --script-opts=%s" "$chapters_file" "$options"
@@ -231,7 +228,6 @@ build_flags() {
 
 source="myanimelist"
 filter=""
-always=0
 toggle=0
 toggle_key="${ANI_SKIP_TOGGLE_KEY:-a}"
 offset=0
@@ -274,7 +270,6 @@ while [ $# -gt 0 ]; do
             filter=$2
             shift
             ;;
-        --always) always=1 ;;
         --toggle) toggle=1 ;;
         -o | --offset)
             [ $# -lt 2 ] && die "missing offset value!"
