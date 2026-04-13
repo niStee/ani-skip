@@ -136,41 +136,33 @@ ani-skip -q "Solo Leveling"
 
 ## Install
 
-- Linux
-  > For Arch linux, ani-skip is available in the AUR as [ani-skip-git](https://aur.archlinux.org/packages/ani-skip-git).
+> For Arch Linux, ani-skip is available in the AUR as [ani-skip-git](https://aur.archlinux.org/packages/ani-skip-git).
+
+### Prerequisites
+
+Install [mpv](https://mpv.io/) and [fzf](https://github.com/juneguez/fzf) before running the install script.
+
+- **Linux:**
   ```sh
-  git clone https://github.com/synacktraa/ani-skip.git
-  sudo apt install mpv fzf  
-  sudo cp ani-skip/ani-skip /usr/local/bin
-  mkdir -p ~/.config/mpv/scripts && cp ani-skip/skip.lua ~/.config/mpv/scripts
+  sudo apt install mpv fzf
   ```
-  
-- Windows
-  > Make sure [scoop](https://scoop.sh/) is installed.
-  - Open powershell and run:
-    ```powershell
-    scoop install mpv fzf git
-    ```
-  - Open git bash
-    ```sh
-    git clone https://github.com/synacktraa/ani-skip.git
-    cp ani-skip/ani-skip /usr/bin
-    mkdir -p ~/scoop/apps/mpv/current/portable_config/scripts
-    cp ani-skip/skip.lua ~/scoop/apps/mpv/current/portable_config/scripts
-    ```
 
-## Dependencies
-- grep
-- sed
-- curl
-- fzf
-- mpv - Video Player
+- **Windows / WSL:**
+  > Make sure [scoop](https://scoop.sh/) is installed. WSL users must install mpv on Windows, not inside WSL.
+  ```powershell
+  scoop install mpv fzf
+  ```
 
-## Checklist
+### One-liner install
 
-- [x] MPV support
-- [x] MyAnimeList ID resolution
-- [x] AllAnime ID resolution
-- [ ] VLC support
-- [ ] Create packages for Windows, Linux and Termux
-- [ ] Test it on Android termux and Mac
+Works on Linux, WSL, and Git Bash. Installs `ani-skip` to PATH and `skip.lua` to the correct mpv scripts directory.
+
+```sh
+curl -sL https://raw.githubusercontent.com/synacktraa/ani-skip/master/install | sh
+```
+
+## Uninstall
+
+```sh
+curl -sL https://raw.githubusercontent.com/synacktraa/ani-skip/master/uninstall | sh
+```
