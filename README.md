@@ -64,6 +64,9 @@ ani-skip -h
       --toggle
         Enable keybind in mpv to toggle skipping on/off 
         [default: 'a', set ANI_SKIP_TOGGLE_KEY to customize]
+      --offset <seconds>
+        End skip N seconds early to avoid missing episode content
+        [max: 5, default: 0]
       -V, --version
         Show the version of the script
       -h, --help
@@ -114,10 +117,11 @@ ani-skip -i 52299 -e 5
 
 ### Skip behavior
 
-By default, openings and endings are skipped once — you can seek back to watch them again. Use `--always` to skip every time, and `--toggle` to enable the `a` keybind in mpv for toggling skipping on/off. Set `ANI_SKIP_TOGGLE_KEY` to customize the keybind.
+By default, openings and endings are skipped once — you can seek back to watch them again. Use `--always` to skip every time, `--toggle` to enable the `a` keybind in mpv for toggling skipping on/off, and `--offset` to end the skip a few seconds early. Set `ANI_SKIP_TOGGLE_KEY` to customize the keybind.
 
 ```sh
-ani-skip -i 52299 -e 3 --always --toggle
+# Skip always, with toggle keybind, ending skip 3 seconds early
+ani-skip -i 52299 -e 3 --always --toggle --offset 3
 ```
 
 ### Fetch MAL ID only (no episode)
