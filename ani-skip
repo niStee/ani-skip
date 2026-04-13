@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version_number="1.1.0"
+version_number="1.2.0"
 
 agent="Mozilla/5.0 (Windows NT 6.1; Win64; rv:109.0) Gecko/20100101 Firefox/109.0"
 allanime_api="https://api.allanime.day/api"
@@ -26,15 +26,23 @@ help_info() {
       -e, --episode
         Specify the episode number
       -s, --source
-        Source for ID/query resolution (myanimelist, allanime). Default: myanimelist
+        Source for ID/query resolution (myanimelist, allanime). 
+        [default: myanimelist]
       -f, --filter
         Regex to filter search results for disambiguation (used with -q)
+      --toggle
+        Enable keybind in mpv to toggle skipping on/off.
+        When enabled, skips always while active (default: skip once).
+        [default key: 'T' (shift+t), set ANI_SKIP_TOGGLE_KEY to customize]
+      -o, --offset <seconds>
+        End skip N seconds early to avoid missing episode content
+        [max: 5, default: 0]
       -V, --version
         Show the version of the script
       -h, --help
         Show this help message and exit
       -U, --update
-        Update the script
+        Update to the latest version
 
     Either -q or -i is required.
 
@@ -60,6 +68,32 @@ update_script() {
             die "Can't update for some reason!"
         fi
     fi
+
+    # Resolve real user home when run with sudo
+    if [ -n "$SUDO_USER" ]; then
+        real_home=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+    else
+        real_home="$HOME"
+    fi
+
+    lua_remote="$(curl -s -A "$agent" "https://raw.githubusercontent.com/synacktraa/ani-skip/master/skip.lua")" || die "Connection error"
+    for lua_path in \
+        "${real_home}/.config/mpv/scripts/skip.lua" \
+        "${real_home}/scoop/apps/mpv/current/portable_config/scripts/skip.lua" \
+        /mnt/c/Users/*/scoop/apps/mpv/current/portable_config/scripts/skip.lua; do
+        [ -f "$lua_path" ] || continue
+        lua_update="$(printf '%s\n' "$lua_remote" | diff -u "$lua_path" -)"
+        if [ -z "$lua_update" ]; then
+            printf "skip.lua (%s) is up to date :)\n" "$lua_path"
+        else
+            if printf '%s\n' "$lua_update" | patch "$lua_path" -; then
+                printf "skip.lua (%s) has been updated\n" "$lua_path"
+            else
+                printf "\033[1;33mWarning: Could not update skip.lua at %s\033[0m\n" "$lua_path" >&2
+            fi
+        fi
+    done
+
     exit 0
 }
 
@@ -196,11 +230,16 @@ build_flags() {
 
     printf "%s" ";FFMETADATA1" > "$chapters_file"
     options=$(build_options "$metadata")
+    [ "$toggle" = 1 ] && options="$options,skip-toggle=yes,skip-toggle_key=$toggle_key"
+    [ "$offset" -gt 0 ] && options="$options,skip-offset=$offset"
     [ -n "$options" ] && printf -- "--chapters-file=%s --script-opts=%s" "$chapters_file" "$options"
 }
 
 source="myanimelist"
 filter=""
+toggle=0
+toggle_key="${ANI_SKIP_TOGGLE_KEY:-T}"
+offset=0
 
 [ $# -eq 0 ] && help_info
 while [ $# -gt 0 ]; do
@@ -238,6 +277,15 @@ while [ $# -gt 0 ]; do
         -f | --filter)
             [ $# -lt 2 ] && die "missing filter!"
             filter=$2
+            shift
+            ;;
+        --toggle) toggle=1 ;;
+        -o | --offset)
+            [ $# -lt 2 ] && die "missing offset value!"
+            case $2 in
+                ''|*[!0-9]*) die "offset must be a number!" ;;
+                *) [ "$2" -gt 5 ] && die "offset cannot be more than 5 seconds!" ; offset=$2 ;;
+            esac
             shift
             ;;
     esac
