@@ -33,7 +33,7 @@ help_info() {
       --toggle
         Enable keybind in mpv to toggle skipping on/off.
         When enabled, skips always while active (default: skip once).
-        [default key: 'a', set ANI_SKIP_TOGGLE_KEY to customize]
+        [default key: 'T' (shift+t), set ANI_SKIP_TOGGLE_KEY to customize]
       -o, --offset <seconds>
         End skip N seconds early to avoid missing episode content
         [max: 5, default: 0]
@@ -229,7 +229,7 @@ build_flags() {
 source="myanimelist"
 filter=""
 toggle=0
-toggle_key="${ANI_SKIP_TOGGLE_KEY:-a}"
+toggle_key="${ANI_SKIP_TOGGLE_KEY:-T}"
 offset=0
 
 [ $# -eq 0 ] && help_info

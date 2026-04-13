@@ -61,7 +61,7 @@ ani-skip -h
       --toggle
         Enable keybind in mpv to toggle skipping on/off.
         When enabled, skips always while active (default: skip once).
-        [default key: 'a', set ANI_SKIP_TOGGLE_KEY to customize]
+        [default key: 'T' (shift+t), set ANI_SKIP_TOGGLE_KEY to customize]
       -o, --offset <seconds>
         End skip N seconds early to avoid missing episode content
         [max: 5, default: 0]
@@ -115,7 +115,7 @@ ani-skip -i 52299 -e 5
 
 ### Skip behavior
 
-By default, openings and endings are skipped once — you can seek back to watch them again. Use `--toggle` to enable the `a` keybind in mpv for toggling skipping on/off (skips always while active). Use `--offset` to end the skip a few seconds early. Set `ANI_SKIP_TOGGLE_KEY` to customize the keybind.
+By default, openings and endings are skipped once — you can seek back to watch them again. Use `--toggle` to enable the `T` (shift+t) keybind in mpv for toggling skipping on/off (skips always while active). Use `--offset` to end the skip a few seconds early. Set `ANI_SKIP_TOGGLE_KEY` to customize the keybind.
 
 ```sh
 # Toggle keybind enabled, ending skip 3 seconds early

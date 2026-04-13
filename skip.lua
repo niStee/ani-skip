@@ -4,7 +4,7 @@ local mpv_options = require("mp.options")
 
 local options = { -- setting default options
     op_start = 0, op_end = 0, ed_start = 0, ed_end = 0,
-    toggle = false, toggle_key = "a", offset = 0,
+    toggle = false, toggle_key = "T", offset = 0,
 }
 mpv_options.read_options(options, "skip") --reading script-opts data
 
