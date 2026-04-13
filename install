@@ -1,0 +1,62 @@
+#!/bin/sh
+
+set -e
+
+repo="https://raw.githubusercontent.com/synacktraa/ani-skip/master"
+agent="Mozilla/5.0 (Windows NT 6.1; Win64; rv:109.0) Gecko/20100101 Firefox/109.0"
+
+die() {
+    printf "\033[1;31m%s\033[0m\n" "$*" >&2
+    exit 1
+}
+
+info() {
+    printf "\033[1;34m%s\033[0m\n" "$*"
+}
+
+ok() {
+    printf "\033[1;32m%s\033[0m\n" "$*"
+}
+
+command -v curl >/dev/null || die "curl is required"
+command -v fzf >/dev/null 2>&1 || die "fzf is required. Install it first."
+
+bin_dir="/usr/local/bin"
+
+# Detect environment and set lua path
+if command -v wslpath >/dev/null 2>&1; then
+    command -v mpv.exe >/dev/null 2>&1 || die "mpv is required. Install it on Windows using scoop: scoop install mpv"
+    win_home="$(wslpath "$(cmd.exe /c "<nul set /p=%UserProfile%" 2>/dev/null)")"
+    lua_dir="${win_home}/scoop/apps/mpv/current/portable_config/scripts"
+elif [ "$OSTYPE" = "msys" ] || [ "$MSYSTEM" = "MINGW64" ] || [ "$MSYSTEM" = "MINGW32" ]; then
+    command -v mpv.exe >/dev/null 2>&1 || die "mpv is required. Install it using: scoop install mpv"
+    bin_dir="/usr/bin"
+    lua_dir="${HOME}/scoop/apps/mpv/current/portable_config/scripts"
+else
+    command -v mpv >/dev/null 2>&1 || die "mpv is required. Install it first."
+    lua_dir="${HOME}/.config/mpv/scripts"
+fi
+
+info "Downloading ani-skip..."
+ani_skip="$(curl -s -A "$agent" "$repo/ani-skip")" || die "Failed to download ani-skip"
+
+info "Downloading skip.lua..."
+skip_lua="$(curl -s -A "$agent" "$repo/skip.lua")" || die "Failed to download skip.lua"
+
+# Install ani-skip
+if [ -w "$bin_dir" ]; then
+    printf "%s\n" "$ani_skip" > "$bin_dir/ani-skip"
+    chmod +x "$bin_dir/ani-skip"
+else
+    info "Need sudo to install to $bin_dir"
+    printf "%s\n" "$ani_skip" | sudo tee "$bin_dir/ani-skip" >/dev/null
+    sudo chmod +x "$bin_dir/ani-skip"
+fi
+ok "Installed ani-skip to $bin_dir/ani-skip"
+
+# Install skip.lua
+mkdir -p "$lua_dir"
+printf "%s\n" "$skip_lua" > "$lua_dir/skip.lua"
+ok "Installed skip.lua to $lua_dir/skip.lua"
+
+ok "Done! Run 'ani-skip -h' to get started."
