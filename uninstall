@@ -1,0 +1,52 @@
+#!/bin/sh
+
+set -e
+
+die() {
+    printf "\033[1;31m%s\033[0m\n" "$*" >&2
+    exit 1
+}
+
+info() {
+    printf "\033[1;34m%s\033[0m\n" "$*"
+}
+
+ok() {
+    printf "\033[1;32m%s\033[0m\n" "$*"
+}
+
+bin_dir="/usr/local/bin"
+
+# Detect environment and set lua path
+if command -v wslpath >/dev/null 2>&1; then
+    win_home="$(wslpath "$(cmd.exe /c "<nul set /p=%UserProfile%" 2>/dev/null)")"
+    lua_dir="${win_home}/scoop/apps/mpv/current/portable_config/scripts"
+elif [ "$OSTYPE" = "msys" ] || [ "$MSYSTEM" = "MINGW64" ] || [ "$MSYSTEM" = "MINGW32" ]; then
+    bin_dir="/usr/bin"
+    lua_dir="${HOME}/scoop/apps/mpv/current/portable_config/scripts"
+else
+    lua_dir="${HOME}/.config/mpv/scripts"
+fi
+
+# Remove ani-skip
+if [ -f "$bin_dir/ani-skip" ]; then
+    if [ -w "$bin_dir" ]; then
+        rm "$bin_dir/ani-skip"
+    else
+        info "Need sudo to remove from $bin_dir"
+        sudo rm "$bin_dir/ani-skip"
+    fi
+    ok "Removed $bin_dir/ani-skip"
+else
+    info "ani-skip not found in $bin_dir"
+fi
+
+# Remove skip.lua
+if [ -f "$lua_dir/skip.lua" ]; then
+    rm "$lua_dir/skip.lua"
+    ok "Removed $lua_dir/skip.lua"
+else
+    info "skip.lua not found in $lua_dir"
+fi
+
+ok "Done! ani-skip has been uninstalled."
