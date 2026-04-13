@@ -223,8 +223,8 @@ build_flags() {
 
     printf "%s" ";FFMETADATA1" > "$chapters_file"
     options=$(build_options "$metadata")
-    [ "$always" = 1 ] && options="$options,skip-always=true"
-    [ "$toggle" = 1 ] && options="$options,skip-toggle=true,skip-toggle_key=$toggle_key"
+    [ "$always" = 1 ] && options="$options,skip-always=yes"
+    [ "$toggle" = 1 ] && options="$options,skip-toggle=yes,skip-toggle_key=$toggle_key"
     [ "$offset" -gt 0 ] && options="$options,skip-offset=$offset"
     [ -n "$options" ] && printf -- "--chapters-file=%s --script-opts=%s" "$chapters_file" "$options"
 }
