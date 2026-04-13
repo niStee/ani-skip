@@ -70,9 +70,14 @@ update_script() {
     fi
 
     lua_remote="$(curl -s -A "$agent" "https://raw.githubusercontent.com/synacktraa/ani-skip/master/skip.lua")" || die "Connection error"
+    win_home=""
+    if [ -n "$WSL_DISTRO_NAME" ]; then
+        win_home="$(wslpath "$(cmd.exe /c "<nul set /p=%UserProfile%" 2>/dev/null)")"
+    fi
     for lua_path in \
         "${HOME}/.config/mpv/scripts/skip.lua" \
-        "${HOME}/scoop/apps/mpv/current/portable_config/scripts/skip.lua"; do
+        "${HOME}/scoop/apps/mpv/current/portable_config/scripts/skip.lua" \
+        ${win_home:+"${win_home}/scoop/apps/mpv/current/portable_config/scripts/skip.lua"}; do
         [ -f "$lua_path" ] || continue
         lua_update="$(printf '%s\n' "$lua_remote" | diff -u "$lua_path" -)"
         if [ -z "$lua_update" ]; then
