@@ -26,9 +26,16 @@ help_info() {
       -e, --episode
         Specify the episode number
       -s, --source
-        Source for ID/query resolution (myanimelist, allanime). Default: myanimelist
+        Source for ID/query resolution (myanimelist, allanime). 
+        [default: myanimelist]
       -f, --filter
         Regex to filter search results for disambiguation (used with -q)
+      --always
+        Always skip 
+        [default: skip once per session]
+      --toggle
+        Enable keybind in mpv to toggle skipping on/off 
+        [default: 'a', set ANI_SKIP_TOGGLE_KEY to customize]
       -V, --version
         Show the version of the script
       -h, --help
@@ -196,11 +203,16 @@ build_flags() {
 
     printf "%s" ";FFMETADATA1" > "$chapters_file"
     options=$(build_options "$metadata")
+    [ "$always" = 1 ] && options="$options,skip-always=true"
+    [ "$toggle" = 1 ] && options="$options,skip-toggle=true,skip-toggle_key=$toggle_key"
     [ -n "$options" ] && printf -- "--chapters-file=%s --script-opts=%s" "$chapters_file" "$options"
 }
 
 source="myanimelist"
 filter=""
+always=0
+toggle=0
+toggle_key="${ANI_SKIP_TOGGLE_KEY:-a}"
 
 [ $# -eq 0 ] && help_info
 while [ $# -gt 0 ]; do
@@ -240,6 +252,8 @@ while [ $# -gt 0 ]; do
             filter=$2
             shift
             ;;
+        --always) always=1 ;;
+        --toggle) toggle=1 ;;
     esac
     shift
 done
