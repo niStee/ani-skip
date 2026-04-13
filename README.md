@@ -64,7 +64,7 @@ ani-skip -h
       --toggle
         Enable keybind in mpv to toggle skipping on/off 
         [default: 'a', set ANI_SKIP_TOGGLE_KEY to customize]
-      --offset <seconds>
+      -o, --offset <seconds>
         End skip N seconds early to avoid missing episode content
         [max: 5, default: 0]
       -V, --version

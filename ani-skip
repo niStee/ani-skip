@@ -36,7 +36,7 @@ help_info() {
       --toggle
         Enable keybind in mpv to toggle skipping on/off
         [default: 'a', set ANI_SKIP_TOGGLE_KEY to customize]
-      --offset <seconds>
+      -o, --offset <seconds>
         End skip N seconds early to avoid missing episode content
         [max: 5, default: 0]
       -V, --version
@@ -259,7 +259,7 @@ while [ $# -gt 0 ]; do
             ;;
         --always) always=1 ;;
         --toggle) toggle=1 ;;
-        --offset)
+        -o | --offset)
             [ $# -lt 2 ] && die "missing offset value!"
             case $2 in
                 ''|*[!0-9]*) die "offset must be a number!" ;;
