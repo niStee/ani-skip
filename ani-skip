@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version_number="1.1.0"
+version_number="1.2.0"
 
 agent="Mozilla/5.0 (Windows NT 6.1; Win64; rv:109.0) Gecko/20100101 Firefox/109.0"
 allanime_api="https://api.allanime.day/api"
