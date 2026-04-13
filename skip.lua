@@ -4,7 +4,7 @@ local mpv_options = require("mp.options")
 
 local options = { -- setting default options
     op_start = 0, op_end = 0, ed_start = 0, ed_end = 0,
-    always = false, toggle = false, toggle_key = "a",
+    always = false, toggle = false, toggle_key = "a", offset = 0,
 }
 mpv_options.read_options(options, "skip") --reading script-opts data
 
@@ -27,7 +27,7 @@ local function skip()
     -- Check for opening sequence
     if current_time >= options.op_start and current_time < options.op_end then
         if options.always or not skipped_op then
-            mp.set_property_number("time-pos", options.op_end)
+            mp.set_property_number("time-pos", options.op_end - options.offset)
             skipped_op = true
         end
     end
@@ -35,7 +35,7 @@ local function skip()
     -- Check for ending sequence
     if current_time >= options.ed_start and current_time < options.ed_end then
         if options.always or not skipped_ed then
-            mp.set_property_number("time-pos", options.ed_end)
+            mp.set_property_number("time-pos", options.ed_end - options.offset)
             skipped_ed = true
         end
     end

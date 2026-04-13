@@ -34,8 +34,11 @@ help_info() {
         Always skip 
         [default: skip once per session]
       --toggle
-        Enable keybind in mpv to toggle skipping on/off 
+        Enable keybind in mpv to toggle skipping on/off
         [default: 'a', set ANI_SKIP_TOGGLE_KEY to customize]
+      --offset <seconds>
+        End skip N seconds early to avoid missing episode content
+        [max: 5, default: 0]
       -V, --version
         Show the version of the script
       -h, --help
@@ -205,6 +208,7 @@ build_flags() {
     options=$(build_options "$metadata")
     [ "$always" = 1 ] && options="$options,skip-always=true"
     [ "$toggle" = 1 ] && options="$options,skip-toggle=true,skip-toggle_key=$toggle_key"
+    [ "$offset" -gt 0 ] && options="$options,skip-offset=$offset"
     [ -n "$options" ] && printf -- "--chapters-file=%s --script-opts=%s" "$chapters_file" "$options"
 }
 
@@ -213,6 +217,7 @@ filter=""
 always=0
 toggle=0
 toggle_key="${ANI_SKIP_TOGGLE_KEY:-a}"
+offset=0
 
 [ $# -eq 0 ] && help_info
 while [ $# -gt 0 ]; do
@@ -254,6 +259,14 @@ while [ $# -gt 0 ]; do
             ;;
         --always) always=1 ;;
         --toggle) toggle=1 ;;
+        --offset)
+            [ $# -lt 2 ] && die "missing offset value!"
+            case $2 in
+                ''|*[!0-9]*) die "offset must be a number!" ;;
+                *) [ "$2" -gt 5 ] && die "offset cannot be more than 5 seconds!" ; offset=$2 ;;
+            esac
+            shift
+            ;;
     esac
     shift
 done
