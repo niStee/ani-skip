@@ -69,15 +69,18 @@ update_script() {
         fi
     fi
 
-    lua_remote="$(curl -s -A "$agent" "https://raw.githubusercontent.com/synacktraa/ani-skip/master/skip.lua")" || die "Connection error"
-    win_home=""
-    if [ -n "$WSL_DISTRO_NAME" ]; then
-        win_home="$(wslpath "$(cmd.exe /c "<nul set /p=%UserProfile%" 2>/dev/null)")"
+    # Resolve real user home when run with sudo
+    if [ -n "$SUDO_USER" ]; then
+        real_home=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+    else
+        real_home="$HOME"
     fi
+
+    lua_remote="$(curl -s -A "$agent" "https://raw.githubusercontent.com/synacktraa/ani-skip/master/skip.lua")" || die "Connection error"
     for lua_path in \
-        "${HOME}/.config/mpv/scripts/skip.lua" \
-        "${HOME}/scoop/apps/mpv/current/portable_config/scripts/skip.lua" \
-        ${win_home:+"${win_home}/scoop/apps/mpv/current/portable_config/scripts/skip.lua"}; do
+        "${real_home}/.config/mpv/scripts/skip.lua" \
+        "${real_home}/scoop/apps/mpv/current/portable_config/scripts/skip.lua" \
+        /mnt/c/Users/*/scoop/apps/mpv/current/portable_config/scripts/skip.lua; do
         [ -f "$lua_path" ] || continue
         lua_update="$(printf '%s\n' "$lua_remote" | diff -u "$lua_path" -)"
         if [ -z "$lua_update" ]; then
@@ -90,6 +93,7 @@ update_script() {
             fi
         fi
     done
+
     exit 0
 }
 
