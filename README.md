@@ -54,9 +54,16 @@ ani-skip -h
       -e, --episode
         Specify the episode number
       -s, --source
-        Source for ID/query resolution (myanimelist, allanime). Default: myanimelist
+        Source for ID/query resolution (myanimelist, allanime). 
+        [default: myanimelist]
       -f, --filter
         Regex to filter search results for disambiguation (used with -q)
+      --always
+        Always skip 
+        [default: skip once per session]
+      --toggle
+        Enable keybind in mpv to toggle skipping on/off 
+        [default: 'a', set ANI_SKIP_TOGGLE_KEY to customize]
       -V, --version
         Show the version of the script
       -h, --help
@@ -103,6 +110,14 @@ ani-skip -i "ReooPAxPMsHM4KPMY" -s allanime -e 12
 
 # MAL ID
 ani-skip -i 52299 -e 5
+```
+
+### Skip behavior
+
+By default, openings and endings are skipped once — you can seek back to watch them again. Use `--always` to skip every time, and `--toggle` to enable the `a` keybind in mpv for toggling skipping on/off. Set `ANI_SKIP_TOGGLE_KEY` to customize the keybind.
+
+```sh
+ani-skip -i 52299 -e 3 --always --toggle
 ```
 
 ### Fetch MAL ID only (no episode)
