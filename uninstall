@@ -41,12 +41,12 @@ else
     info "ani-skip not found in $bin_dir"
 fi
 
-# Remove skip.lua
+# Remove mpv integration
 if [ -f "$lua_dir/skip.lua" ]; then
     rm "$lua_dir/skip.lua"
-    ok "Removed $lua_dir/skip.lua"
+    ok "Removed mpv integration from $lua_dir"
 else
-    info "skip.lua not found in $lua_dir"
+    info "mpv integration not found in $lua_dir"
 fi
 
 ok "Done! ani-skip has been uninstalled."
