@@ -1,0 +1,47 @@
+#!/bin/sh
+
+set -e
+
+repo="https://raw.githubusercontent.com/synacktraa/ani-skip/master"
+agent="Mozilla/5.0 (Windows NT 6.1; Win64; rv:109.0) Gecko/20100101 Firefox/109.0"
+
+die() {
+    printf "\033[1;31m%s\033[0m\n" "$*" >&2
+    exit 1
+}
+
+info() {
+    printf "\033[1;34m%s\033[0m\n" "$*"
+}
+
+ok() {
+    printf "\033[1;32m%s\033[0m\n" "$*"
+}
+
+# Resolve real user home when run with sudo
+if [ -n "$SUDO_USER" ]; then
+    real_home=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+else
+    real_home="$HOME"
+fi
+
+# --- MPV integration ---
+info "Updating mpv integration..."
+mpv_remote="$(curl -s -A "$agent" "$repo/integrations/mpv.lua")" || die "Failed to download mpv integration"
+
+for lua_path in \
+    "${real_home}/.config/mpv/scripts/skip.lua" \
+    "${real_home}/scoop/apps/mpv/current/portable_config/scripts/skip.lua" \
+    /mnt/c/Users/*/scoop/apps/mpv/current/portable_config/scripts/skip.lua; do
+    [ -f "$lua_path" ] || continue
+    lua_update="$(printf '%s\n' "$mpv_remote" | diff -u "$lua_path" -)"
+    if [ -z "$lua_update" ]; then
+        ok "mpv integration is up to date :)"
+    else
+        if printf '%s\n' "$lua_update" | patch "$lua_path" -; then
+            ok "mpv integration has been updated"
+        else
+            printf "\033[1;33mWarning: Could not update mpv integration at %s\033[0m\n" "$lua_path" >&2
+        fi
+    fi
+done

@@ -25,7 +25,7 @@ bin_dir="/usr/local/bin"
 
 # Detect environment and set lua path
 if command -v wslpath >/dev/null 2>&1; then
-    command -v mpv.exe >/dev/null 2>&1 || die "mpv is required. Install it on Windows using scoop: scoop install mpv"
+    command -v mpv.exe >/dev/null 2>&1 || die "mpv is required. Install it on Windows using: scoop install mpv"
     win_home="$(wslpath "$(cmd.exe /c "<nul set /p=%UserProfile%" 2>/dev/null)")"
     lua_dir="${win_home}/scoop/apps/mpv/current/portable_config/scripts"
 elif [ "$OSTYPE" = "msys" ] || [ "$MSYSTEM" = "MINGW64" ] || [ "$MSYSTEM" = "MINGW32" ]; then
@@ -40,8 +40,8 @@ fi
 info "Downloading ani-skip..."
 ani_skip="$(curl -s -A "$agent" "$repo/ani-skip")" || die "Failed to download ani-skip"
 
-info "Downloading skip.lua..."
-skip_lua="$(curl -s -A "$agent" "$repo/skip.lua")" || die "Failed to download skip.lua"
+info "Downloading mpv integration..."
+mpv_integration="$(curl -s -A "$agent" "$repo/integrations/mpv.lua")" || die "Failed to download mpv integration"
 
 # Install ani-skip
 if [ -w "$bin_dir" ]; then
@@ -54,9 +54,9 @@ else
 fi
 ok "Installed ani-skip to $bin_dir/ani-skip"
 
-# Install skip.lua
+# Install mpv integration
 mkdir -p "$lua_dir"
-printf "%s\n" "$skip_lua" > "$lua_dir/skip.lua"
-ok "Installed skip.lua to $lua_dir/skip.lua"
+printf "%s\n" "$mpv_integration" > "$lua_dir/skip.lua"
+ok "Installed mpv integration to $lua_dir"
 
 ok "Done! Run 'ani-skip -h' to get started."
