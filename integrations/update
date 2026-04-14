@@ -34,10 +34,10 @@ for lua_path in \
     [ -f "$lua_path" ] || continue
     lua_update="$(printf '%s\n' "$mpv_remote" | diff -u "$lua_path" -)"
     if [ -z "$lua_update" ]; then
-        ok "mpv integration is up to date :)"
+        ok "mpv integration ($lua_path) is up to date :)"
     else
         if printf '%s\n' "$lua_update" | patch "$lua_path" -; then
-            ok "mpv integration has been updated"
+            ok "mpv integration ($lua_path) has been updated"
         else
             printf "\033[1;33mWarning: Could not update mpv integration at %s\033[0m\n" "$lua_path" >&2
         fi
