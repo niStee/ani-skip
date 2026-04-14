@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 repo="https://raw.githubusercontent.com/synacktraa/ani-skip/master"
 agent="Mozilla/5.0 (Windows NT 6.1; Win64; rv:109.0) Gecko/20100101 Firefox/109.0"
 
